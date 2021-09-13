@@ -1,16 +1,17 @@
 """
-Необходимо собрать информацию о вакансиях на вводимую должность (используем input или через аргументы) с сайтов Superjob и HH. Приложение должно анализировать несколько страниц сайта (также вводим через input или аргументы). Получившийся список должен содержать в себе минимум:
-Наименование вакансии.
-Предлагаемую зарплату (отдельно минимальную и максимальную).
-Ссылку на саму вакансию.
-Сайт, откуда собрана вакансия. 
-### По желанию можно добавить ещё параметры вакансии (например, работодателя и расположение). Структура должна быть одинаковая для вакансий с обоих сайтов. Общий результат можно вывести с помощью dataFrame через pandas.
+1. Развернуть у себя на компьютере/виртуальной машине/хостинге MongoDB и реализовать функцию, записывающую собранные вакансии в созданную БД.
+2. Написать функцию, которая производит поиск и выводит на экран вакансии с заработной платой больше введённой суммы.
+3. Написать функцию, которая будет добавлять в вашу базу данных только новые вакансии с сайта.
 """
 
 from bs4 import BeautifulSoup as bs
 import requests
 import re
 import pandas as pd
+from pymongo import MongoClient
+import json
+
+from pprint import pprint
 
 def _parser_hh(vacancy):
 
@@ -111,7 +112,11 @@ def _parser_item_hh(item):
             salary_min = int("".join(salary[1:-1]))
             salary_max = None
         else:
-            salary_min = int(salary[0]+salary[1])
+            #print(salary)
+            if salary[1] != '–':
+                salary_min = int(salary[0]+salary[1])
+            else:
+                salary_min = int(salary[0])
             salary_max = int(salary[-3]+salary[-2])
         
         salary_currency = salary[-1]
@@ -278,14 +283,52 @@ def parser_vacancy(vacancy):
     vacancy_date = []
     vacancy_date.extend(_parser_hh(vacancy))
     vacancy_date.extend(_parser_superjob(vacancy))
-    
-    df = pd.DataFrame(vacancy_date)
 
-    return df
+    return vacancy_date
+
+def connect_db(mongodb_uri, db_name, collection_name):
+    mongodb = MongoClient(mongodb_uri)
+    db = mongodb[db_name]
+    collection = db[collection_name]
+    return collection
+
+def add_one(collection, d1):
+    collection.insert_one(d1)
+
+def upd_one(collection, d1):
+    collection.update_one({'vacancy_link': d1['vacancy_link']}, {'$set': d1})
+
+# 1. Развернуть у себя на компьютере/виртуальной машине/хостинге MongoDB и реализовать функцию, записывающую собранные вакансии в созданную БД.
+def add_all(collection, vac_data):
+    #collection.insert_many(df)
+    add_amnt = 0
+    upd_amnt = 0
+    for d1 in vac_data:
+        if is_exists(collection, 'vacancy_link', d1['vacancy_link']):
+            upd_one(collection, d1)
+            upd_amnt += 1
+        else:
+            add_one(collection, d1)
+            add_amnt += 1
+    print(f"Add: {add_amnt}\nUpd: {upd_amnt}\n")
+
+# 2. Написать функцию, которая производит поиск и выводит на экран вакансии с заработной платой больше введённой суммы.
+def print_salary_max(collection, salary):
+    objects = collection.find({'salary_max': {'$gt': salary}})
+    for obj in objects:
+        pprint(obj)
+
+# 3. Написать функцию, которая будет добавлять в вашу базу данных только новые вакансии с сайта.
+def is_exists(collection, name_tags, field):
+    return bool(collection.find_one({name_tags: {"$in": [field]}}))
+
+coll = connect_db('mongodb://localhost:27017/', 'vacancy', 'vacancy_db')
+
 
 vacancy = 'Python'
-df = parser_vacancy(vacancy)
-# Сброс ограничений на число столбцов
-pd.set_option('display.max_columns', None)
-print(df.head())
-print(df.tail())
+vac_data = parser_vacancy(vacancy)
+print("Ammount:", len(vac_data))
+
+add_all(coll, vac_data)
+
+print_salary_max(coll, 300000)
