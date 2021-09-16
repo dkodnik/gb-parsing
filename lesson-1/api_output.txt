@@ -1,0 +1,3 @@
+{"message":"Invalid API key. Go to https:\/\/docs.rapidapi.com\/docs\/keys for more info."}
+[{"country":"Russia","code":"RU","confirmed":10633869,"recovered":8810973,"critical":2300,"deaths":195255,"latitude":61.52401,"longitude":105.318756,"lastChange":"2021-03-12T20:14:56+01:00","lastUpdate":"2021-09-01T12:30:03+02:00"}]
+[{"confirmed":15085083,"recovered":9105030,"deaths":618504,"active":5361549,"critical":63786,"date":"2020-07-21"}]
