@@ -19,9 +19,16 @@ def process_def_list(value):
     return value
 
 
+def process_price(value):
+    if value:
+        value = float(value.replace(' ', ''))
+    return value
+
+
 class LeroymerlinItem(scrapy.Item):
     name = scrapy.Field(outpun_processor=TakeFirst())
     url = scrapy.Field(output_processor=TakeFirst())
     photos = scrapy.Field(input_processor=MapCompose(process_url))
     def_list = scrapy.Field(input_processor=MapCompose(process_def_list))
+    price = scrapy.Field(input_processor=MapCompose(process_price), output_processor=TakeFirst())
     _id = scrapy.Field()  # для монго

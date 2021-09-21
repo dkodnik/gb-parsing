@@ -32,6 +32,7 @@ class LeroymerlinPipeline:
         collection = self.mongo_base[spider.name]
 
         item['name'] = item['name'][0]
+        #item['price'] = item['price'][0]
         item['def_list'] = convert_list(item['def_list'])
 
         collection.insert_one(item)

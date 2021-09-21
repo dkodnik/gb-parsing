@@ -28,6 +28,8 @@ class LmruSpider(scrapy.Spider):
         loader.add_xpath('name', '//h1/text()')
         loader.add_xpath('photos', '//img[contains(@slot, "thumbs")]/@src')
         loader.add_value('url', response.url)
+        #loader.add_xpath('price', '//meta[@itemprop="price"]/@content')
+        loader.add_xpath('price', '//span[@slot="price"]/text()')
         loader.add_xpath('def_list', '//dt[@class="def-list__term"]/text()|//dd[@class="def-list__definition"]/text()')
 
         yield loader.load_item()
