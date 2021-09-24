@@ -13,7 +13,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from pymongo import MongoClient
-from selenium.common import exceptions
 
 # Монго:
 db_name = 'mail_db'
@@ -38,43 +37,38 @@ first_messege = WebDriverWait(driver, 10).until(EC.presence_of_element_located((
 first_messege.click()
 
 while True:
+
+    mail = {}
+
+    time.sleep(3)
+
+    title = driver.find_element_by_tag_name('h2').text
+    letter_contact = driver.find_element_by_xpath('//span[@class="letter-contact"]').get_attribute('title')
+    letter_date = driver.find_element_by_xpath('//div[@class ="letter__date"]').text
+
+    mail['contact'] = letter_contact
+    mail['date'] = letter_date
+    mail['title'] = title
+
     try:
-        mail = {}
+        letter_body = driver.find_element_by_xpath('//div[contains(@id, "BODY")]').text
+        mail['body'] = letter_body
+    except BaseException:
+        pass
 
-        time.sleep(3)
+    collection.insert_one(mail)
 
-        title = driver.find_element_by_tag_name('h2').text
-        letter_contact = driver.find_element_by_xpath('//span[@class="letter-contact"]').get_attribute('title')
-        letter_date = driver.find_element_by_xpath('//div[@class ="letter__date"]').text
+    button_next = WebDriverWait(driver, 15).until(
+        EC.presence_of_element_located((By.CLASS_NAME, 'portal-menu-element_next')))
 
-        mail['contact'] = letter_contact
-        mail['date'] = letter_date
-        mail['title'] = title
-
-        try:
-            letter_body = driver.find_element_by_xpath('//div[contains(@id, "BODY")]').text
-            mail['body'] = letter_body
-        except BaseException:
-            pass
-
-        collection.update(mail, mail, upsert=True)
-
-        button_next = WebDriverWait(driver, 15).until(
-            EC.presence_of_element_located((By.CLASS_NAME, 'portal-menu-element_next')))
-
-        ends = button_next.find_element_by_xpath('//span[contains(@class, "button2_arrow-down")]')
-        try:
-            is_ends = ends.get_attribute('disabled')
-            if is_ends:
-                print('Больше нет писем')
-                break
-        except BaseException:
-            pass
-
-        # ... это ещё не конец!
-        button_next.click()
-    except exceptions.TimeoutException:
-        print('Больше нет писем 1')
+    ends = button_next.find_element_by_xpath('//span[contains(@class, "button2_arrow-down")]')
+    is_ends = ends.get_attribute('disabled')
+    if is_ends:
+        print('Больше нет писем')
         break
+
+    # ... это ещё не конец!
+    button_next.click()
+
 
 driver.quit()
