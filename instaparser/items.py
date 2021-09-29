@@ -14,3 +14,4 @@ class InstaparserItem(scrapy.Item):
     photo = scrapy.Field()
     likes = scrapy.Field()
     post = scrapy.Field()
+    timestamp = scrapy.Field()

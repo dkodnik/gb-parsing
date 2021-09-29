@@ -7,7 +7,7 @@ import json
 from urllib.parse import urlencode
 from copy import deepcopy
 
-import no_include
+import instaparser.spiders.no_include as no_include
 
 
 class InstagramSpider(scrapy.Spider):
@@ -21,7 +21,7 @@ class InstagramSpider(scrapy.Spider):
     parse_user = 'thisisbillgates'  # Пользователь, у которого собираем посты. Можно указать список
 
     graphql_url = 'https://www.instagram.com/graphql/query/?'
-    posts_hash = 'eddbde960fed6bde675388aac39a3657'  # hash для получения данных по постах с главной страницы
+    posts_hash = '8c2a529969ee035a5063f2fc8602a0fd'  # hash для получения данных по постах с главной страницы
 
     def parse(self, response: HtmlResponse):  # Первый запрос на стартовую страницу
         csrf_token = self.fetch_csrf_token(response.text)  # csrf token забираем из html
@@ -46,7 +46,7 @@ class InstagramSpider(scrapy.Spider):
     def user_data_parse(self, response: HtmlResponse, username):
         user_id = self.fetch_user_id(response.text, username)  # Получаем id пользователя
         variables = {'id': user_id,  # Формируем словарь для передачи даных в запрос
-                     'first': 12}  # 12 постов. Можно больше (макс. 50)
+                     'first': 1}  # 12 постов. Можно больше (макс. 50)
         url_posts = f'{self.graphql_url}query_hash={self.posts_hash}&{urlencode(variables)}'  # Формируем ссылку для получения данных о постах
         yield response.follow(
             url_posts,
@@ -60,7 +60,12 @@ class InstagramSpider(scrapy.Spider):
                          variables):  # Принимаем ответ. Не забываем про параметры от cb_kwargs
         j_data = json.loads(response.text)
         page_info = j_data.get('data').get('user').get('edge_owner_to_timeline_media').get('page_info')
+
+        page_amount = j_data.get('data').get('user').get('edge_owner_to_timeline_media').get('count')
+        print("=" * 50, "\n", page_amount, "\n", "=" * 50)
+
         if page_info.get('has_next_page'):  # Если есть следующая страница
+            print("NEXT PAGE>>>")
             variables['after'] = page_info['end_cursor']  # Новый параметр для перехода на след. страницу
             url_posts = f'{self.graphql_url}query_hash={self.posts_hash}&{urlencode(variables)}'
             yield response.follow(
@@ -76,7 +81,8 @@ class InstagramSpider(scrapy.Spider):
                 user_id=user_id,
                 photo=post['node']['display_url'],
                 likes=post['node']['edge_media_preview_like']['count'],
-                post=post['node']
+                post=post['node'],
+                timestamp=post['node']['taken_at_timestamp']
             )
         yield item  # В пайплайн
 
