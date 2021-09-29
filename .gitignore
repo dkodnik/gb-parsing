@@ -1,2 +1,5 @@
 .idea
 *.exe
+*.pyc
+images
+no_include.*
