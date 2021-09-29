@@ -7,14 +7,16 @@ import json
 from urllib.parse import urlencode
 from copy import deepcopy
 
+import no_include
+
 
 class InstagramSpider(scrapy.Spider):
     # атрибуты класса
     name = 'instagram'
     allowed_domains = ['instagram.com']
     start_urls = ['https://instagram.com/']
-    insta_login = 'здесь логин'
-    insta_pwd = 'Здесь зашифрованный пароль'
+    insta_login = no_include.my_login
+    insta_pwd = no_include.my_pswrd
     inst_login_link = 'https://www.instagram.com/accounts/login/ajax/'
     parse_user = 'thisisbillgates'  # Пользователь, у которого собираем посты. Можно указать список
 
